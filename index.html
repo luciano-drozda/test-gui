@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -258,6 +258,53 @@
   .copy-btn.copied .icon-copy{ display:none; }
   .copy-btn.copied .icon-check{ display:block; }
 
+  /* ---------- Syntax highlighting (highlight.js tokens, mapped to app palette) ---------- */
+  .hljs{ background:transparent; color:var(--text); }
+  .hljs-comment, .hljs-quote{ color:var(--text-muted); font-style:italic; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-type, .hljs-doctag{ color:var(--julia-purple); }
+  .hljs-string, .hljs-regexp{ color:var(--julia-green); }
+  .hljs-number{ color:var(--julia-blue); }
+  .hljs-title, .hljs-section, .hljs-built_in, .hljs-name,
+  .hljs-selector-id, .hljs-selector-class{ color:var(--julia-blue); font-weight:600; }
+  .hljs-attr, .hljs-attribute, .hljs-symbol, .hljs-bullet, .hljs-link{ color:var(--julia-red); }
+  .hljs-variable, .hljs-template-variable, .hljs-params, .hljs-meta{ color:var(--text); }
+  .hljs-deletion{ background:rgba(203,60,51,.15); }
+  .hljs-addition{ background:rgba(56,152,38,.15); }
+  .hljs-emphasis{ font-style:italic; }
+  .hljs-strong{ font-weight:700; }
+
+  /* ---------- Editable code editor overlay (highlighted <pre> behind a transparent textarea) ---------- */
+  .code-editor{
+    position:relative;
+    height:40vh;
+  }
+  .code-editor pre, .code-editor textarea{
+    position:absolute;
+    top:0; right:0; bottom:0; left:0;
+    height:100%;
+    width:100%;
+    margin:0;
+  }
+  .code-editor pre{
+    overflow:hidden;
+    pointer-events:none;
+  }
+  .code-editor pre code{
+    display:block;
+    padding:0;
+    background:none;
+    color:var(--text);
+    font:inherit;
+    white-space:inherit;
+  }
+  .code-editor textarea{
+    z-index:1;
+    color:transparent;
+    -webkit-text-fill-color:transparent;
+    caret-color:var(--text);
+    background:transparent;
+  }
+
   /* ---------- Action bar ---------- */
   .action-bar{
     display:flex;
@@ -349,7 +396,10 @@
       <span id="source-meta"></span>
     </div>
     <div class="pane-body">
-      <textarea id="source-input" placeholder="Paste Julia source here, or pick a file from gallery/ above…" spellcheck="false"></textarea>
+      <div class="code-editor">
+        <pre class="code-highlight" aria-hidden="true"><code id="source-highlight" class="language-julia"></code></pre>
+        <textarea id="source-input" placeholder="Paste Julia source here, or pick a file from gallery/ above…" spellcheck="false"></textarea>
+      </div>
       <button class="copy-btn" type="button" data-target="source-input" aria-label="Copy source to clipboard" title="Copy">
         <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
         <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -395,7 +445,10 @@
       <span id="yaml-meta"></span>
     </div>
     <div class="pane-body">
-      <textarea id="yaml-input" placeholder="Enter YAML-compliant parameters here…" spellcheck="false"></textarea>
+      <div class="code-editor">
+        <pre class="code-highlight" aria-hidden="true"><code id="yaml-highlight" class="language-yaml"></code></pre>
+        <textarea id="yaml-input" placeholder="Enter YAML-compliant parameters here…" spellcheck="false"></textarea>
+      </div>
       <button class="copy-btn" type="button" data-target="yaml-input" aria-label="Copy YAML input to clipboard" title="Copy">
         <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
         <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -421,6 +474,9 @@
 <div class="status-bar" id="validate-status-bar">ready</div>
 
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/julia.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
 <script>
 /* ---------- Theme toggle (dark / light) ---------- */
 (function initTheme(){
@@ -435,7 +491,7 @@
     catch(err){ /* ignore — theme just won't persist across reloads */ }
   }
 
-  let theme = getStoredTheme() || 'dark';
+  let theme = getStoredTheme() || 'light';
   document.documentElement.setAttribute('data-theme', theme);
 
   document.getElementById('theme-toggle').addEventListener('click', () => {
@@ -472,6 +528,37 @@ const validateOutput    = document.getElementById('validate-output');
 const validateBtn       = document.getElementById('validate-btn');
 const validateStatusBar = document.getElementById('validate-status-bar');
 const validateMeta      = document.getElementById('validate-meta');
+
+/* ---------- Syntax highlighting (Julia / YAML via highlight.js) ---------- */
+const sourceHighlight = document.getElementById('source-highlight'); // <code> behind source-input
+const yamlHighlight   = document.getElementById('yaml-highlight');   // <code> behind yaml-input
+const sourceEditorPre = sourceHighlight.parentElement;                // the overlay <pre>
+const yamlEditorPre   = yamlHighlight.parentElement;
+
+function syncEditorScroll(textareaEl, preEl){
+  preEl.scrollTop = textareaEl.scrollTop;
+  preEl.scrollLeft = textareaEl.scrollLeft;
+}
+
+function highlightEditor(textareaEl, codeEl, lang){
+  if(typeof hljs === 'undefined') return; // CDN failed to load — degrade to plain textarea
+  codeEl.innerHTML = hljs.highlight(textareaEl.value, { language: lang, ignoreIllegals: true }).value + '\n';
+  syncEditorScroll(textareaEl, codeEl.parentElement);
+}
+
+// Highlights a read-only <pre> (generated/validate output) in place.
+function applyHljs(el, lang){
+  if(typeof hljs === 'undefined') return;
+  delete el.dataset.highlighted;
+  el.className = el.className.replace(/\blanguage-\S+\b/g, '').trim();
+  el.classList.add('language-' + lang);
+  hljs.highlightElement(el);
+}
+
+sourceInput.addEventListener('input', () => highlightEditor(sourceInput, sourceHighlight, 'julia'));
+sourceInput.addEventListener('scroll', () => syncEditorScroll(sourceInput, sourceEditorPre));
+yamlInput.addEventListener('input', () => highlightEditor(yamlInput, yamlHighlight, 'yaml'));
+yamlInput.addEventListener('scroll', () => syncEditorScroll(yamlInput, yamlEditorPre));
 
 function setBarStatus(bar, text, kind){
   bar.textContent = text;
@@ -517,6 +604,7 @@ async function selectFile(file, btnEl){
     const res = await fetch(file.download_url);
     const text = await res.text();
     sourceInput.value = text;
+    highlightEditor(sourceInput, sourceHighlight, 'julia');
     sourceMeta.textContent = file.name;
   }catch(err){
     sourceMeta.textContent = 'load failed';
@@ -545,6 +633,7 @@ async function generate(){
     const data = await res.json();
     generatedOut.classList.remove('placeholder');
     generatedOut.textContent = data.result;
+    applyHljs(generatedOut, 'julia');
     generatedMeta.textContent = 'just now';
     setStatus('generated successfully', 'ok');
     validateBtn.disabled = false;
@@ -554,6 +643,7 @@ async function generate(){
     // generated code) — drop it into the yaml input box automatically.
     if(typeof data.yaml_prefill === 'string' && data.yaml_prefill.trim()){
       yamlInput.value = data.yaml_prefill;
+      highlightEditor(yamlInput, yamlHighlight, 'yaml');
       yamlMeta.textContent = 'auto-filled from generated output';
     }
   }catch(err){
