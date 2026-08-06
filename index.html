@@ -121,7 +121,7 @@
     color:var(--text-muted);
   }
 
-  /* ---------- Panes grid (used by both the source/generated section and the yaml/run section) ---------- */
+  /* ---------- Panes grid (used by both the source/generated section and the yaml/validate section) ---------- */
   .panes-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -220,7 +220,7 @@
     padding:20px;
     border-top:1px solid var(--border);
   }
-  #generate-btn, #run-btn{
+  #generate-btn, #validate-btn{
     font-family:var(--font-ui);
     font-weight:600;
     font-size:14px;
@@ -235,9 +235,9 @@
     gap:10px;
     transition:background .15s ease, transform .1s ease;
   }
-  #generate-btn:hover, #run-btn:hover{ background:#8249a3; }
-  #generate-btn:active, #run-btn:active{ transform:scale(.98); }
-  #generate-btn:disabled, #run-btn:disabled{ background:#4a3f57; cursor:progress; }
+  #generate-btn:hover, #validate-btn:hover{ background:#8249a3; }
+  #generate-btn:active, #validate-btn:active{ transform:scale(.98); }
+  #generate-btn:disabled, #validate-btn:disabled{ background:#4a3f57; cursor:progress; }
 
   .pulse-dots{ display:inline-flex; gap:4px; }
   .pulse-dots span{
@@ -324,6 +324,13 @@
 <div class="status-bar" id="status-bar">ready</div>
 
 <div class="section-label">yaml/</div>
+<div class="action-bar">
+  <button id="validate-btn">
+    <span class="julia-dots" id="validate-btn-dots"><span></span><span></span><span></span></span>
+    Validate
+  </button>
+</div>
+
 <section class="panes-grid">
   <section class="pane">
     <div class="pane-header">
@@ -341,12 +348,12 @@
 
   <section class="pane">
     <div class="pane-header">
-      <span><span class="dot" style="background:var(--julia-green);"></span>run output</span>
-      <span id="run-meta"></span>
+      <span><span class="dot" style="background:var(--julia-green);"></span>validate output</span>
+      <span id="validate-meta"></span>
     </div>
     <div class="pane-body">
-      <pre id="run-output" class="placeholder">Output will appear here after you click Run.</pre>
-      <button class="copy-btn" type="button" data-target="run-output" aria-label="Copy run output to clipboard" title="Copy">
+      <pre id="validate-output" class="placeholder">Output will appear here after you click Validate.</pre>
+      <button class="copy-btn" type="button" data-target="validate-output" aria-label="Copy validate output to clipboard" title="Copy">
         <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
         <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
       </button>
@@ -354,14 +361,8 @@
   </section>
 </section>
 
-<div class="action-bar">
-  <button id="run-btn">
-    <span class="julia-dots" id="run-btn-dots"><span></span><span></span><span></span></span>
-    Run
-  </button>
-</div>
+<div class="status-bar" id="validate-status-bar">ready</div>
 
-<div class="status-bar" id="run-status-bar">ready</div>
 
 <script>
 /* ============================================================
@@ -373,7 +374,7 @@ const CONFIG = {
   GITHUB_BRANCH: "main",
   GALLERY_PATH:  "gallery",
   BACKEND_URL:   "https://vps-8abb7fc4.vps.ovh.net/generate", // the Julia HTTP.jl / Genie.jl endpoint
-  RUN_URL:       "https://vps-8abb7fc4.vps.ovh.net/run",      // runs Julia code using the YAML input as parameters
+  VALIDATE_URL:  "https://vps-8abb7fc4.vps.ovh.net/validate",  // validates Julia code using the YAML input as parameters
 };
 
 const sourceInput   = document.getElementById('source-input');
@@ -387,17 +388,17 @@ const generatedMeta  = document.getElementById('generated-meta');
 
 const yamlInput      = document.getElementById('yaml-input');
 const yamlMeta       = document.getElementById('yaml-meta');
-const runOutput      = document.getElementById('run-output');
-const runBtn         = document.getElementById('run-btn');
-const runStatusBar   = document.getElementById('run-status-bar');
-const runMeta        = document.getElementById('run-meta');
+const validateOutput    = document.getElementById('validate-output');
+const validateBtn       = document.getElementById('validate-btn');
+const validateStatusBar = document.getElementById('validate-status-bar');
+const validateMeta      = document.getElementById('validate-meta');
 
 function setBarStatus(bar, text, kind){
   bar.textContent = text;
   bar.className = 'status-bar' + (kind ? ' ' + kind : '');
 }
 function setStatus(text, kind){ setBarStatus(statusBar, text, kind); }
-function setRunStatus(text, kind){ setBarStatus(runStatusBar, text, kind); }
+function setValidateStatus(text, kind){ setBarStatus(validateStatusBar, text, kind); }
 
 /* ---------- Load gallery/ file list from the public repo ---------- */
 async function loadGallery(){
@@ -482,36 +483,36 @@ async function generate(){
   }
 }
 
-/* ---------- Run Julia code (backend uses YAML input as parameters) ---------- */
-async function run(){
+/* ---------- Validate Julia code (backend uses YAML input as parameters) ---------- */
+async function validate(){
   const yaml = yamlInput.value;
   if(!yaml.trim()){
-    setRunStatus('nothing to run — enter some YAML input first', 'error');
+    setValidateStatus('nothing to validate — enter some YAML input first', 'error');
     return;
   }
-  runBtn.disabled = true;
-  setRunStatus('running Julia backend…');
-  runOutput.classList.add('placeholder');
-  runOutput.textContent = 'Running…';
+  validateBtn.disabled = true;
+  setValidateStatus('validating…');
+  validateOutput.classList.add('placeholder');
+  validateOutput.textContent = 'Validating…';
 
   try{
-    const res = await fetch(CONFIG.RUN_URL, {
+    const res = await fetch(CONFIG.VALIDATE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ yaml }),
     });
     if(!res.ok) throw new Error(`backend responded ${res.status}`);
     const data = await res.json();
-    runOutput.classList.remove('placeholder');
-    runOutput.textContent = data.result;
-    runMeta.textContent = 'just now';
-    setRunStatus('ran successfully', 'ok');
+    validateOutput.classList.remove('placeholder');
+    validateOutput.textContent = data.result;
+    validateMeta.textContent = 'just now';
+    setValidateStatus('validated successfully', 'ok');
   }catch(err){
-    runOutput.classList.add('placeholder');
-    runOutput.textContent = `Request failed: ${err.message}\n\nCheck that RUN_URL in index.html points to a running instance of the Julia backend, and that CORS is enabled there.`;
-    setRunStatus(`error — ${err.message}`, 'error');
+    validateOutput.classList.add('placeholder');
+    validateOutput.textContent = `Request failed: ${err.message}\n\nCheck that VALIDATE_URL in index.html points to a running instance of the Julia backend, and that CORS is enabled there.`;
+    setValidateStatus(`error — ${err.message}`, 'error');
   }finally{
-    runBtn.disabled = false;
+    validateBtn.disabled = false;
   }
 }
 
@@ -543,7 +544,7 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
 });
 
 generateBtn.addEventListener('click', generate);
-runBtn.addEventListener('click', run);
+validateBtn.addEventListener('click', validate);
 yamlInput.addEventListener('input', () => { yamlMeta.textContent = ''; });
 loadGallery();
 </script>
