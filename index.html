@@ -113,8 +113,16 @@
     outline-offset:2px;
   }
 
-  /* ---------- Main panes ---------- */
-  main{
+  .section-label{
+    padding:14px 24px 0;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+  }
+
+  /* ---------- Panes grid (used by both the source/generated section and the yaml/run section) ---------- */
+  .panes-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
     align-items:start;
@@ -122,7 +130,7 @@
     background:var(--border);
   }
   @media (max-width: 760px){
-    main{ grid-template-columns:1fr; }
+    .panes-grid{ grid-template-columns:1fr; }
   }
   .pane{
     background:var(--panel);
@@ -212,7 +220,7 @@
     padding:20px;
     border-top:1px solid var(--border);
   }
-  #generate-btn{
+  #generate-btn, #run-btn{
     font-family:var(--font-ui);
     font-weight:600;
     font-size:14px;
@@ -227,9 +235,9 @@
     gap:10px;
     transition:background .15s ease, transform .1s ease;
   }
-  #generate-btn:hover{ background:#8249a3; }
-  #generate-btn:active{ transform:scale(.98); }
-  #generate-btn:disabled{ background:#4a3f57; cursor:progress; }
+  #generate-btn:hover, #run-btn:hover{ background:#8249a3; }
+  #generate-btn:active, #run-btn:active{ transform:scale(.98); }
+  #generate-btn:disabled, #run-btn:disabled{ background:#4a3f57; cursor:progress; }
 
   .pulse-dots{ display:inline-flex; gap:4px; }
   .pulse-dots span{
@@ -276,7 +284,7 @@
   <span id="gallery-status" style="color:var(--text-muted); font-size:12px;">loading files…</span>
 </div>
 
-<main>
+<main class="panes-grid">
   <section class="pane">
     <div class="pane-header">
       <span><span class="dot" style="background:var(--julia-blue);"></span>source</span>
@@ -315,6 +323,45 @@
 
 <div class="status-bar" id="status-bar">ready</div>
 
+<div class="section-label">yaml/</div>
+<section class="panes-grid">
+  <section class="pane">
+    <div class="pane-header">
+      <span><span class="dot" style="background:var(--julia-blue);"></span>yaml input</span>
+    </div>
+    <div class="pane-body">
+      <textarea id="yaml-input" placeholder="Enter YAML-compliant parameters here…" spellcheck="false"></textarea>
+      <button class="copy-btn" type="button" data-target="yaml-input" aria-label="Copy YAML input to clipboard" title="Copy">
+        <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </button>
+    </div>
+  </section>
+
+  <section class="pane">
+    <div class="pane-header">
+      <span><span class="dot" style="background:var(--julia-green);"></span>run output</span>
+      <span id="run-meta"></span>
+    </div>
+    <div class="pane-body">
+      <pre id="run-output" class="placeholder">Output will appear here after you click Run.</pre>
+      <button class="copy-btn" type="button" data-target="run-output" aria-label="Copy run output to clipboard" title="Copy">
+        <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </button>
+    </div>
+  </section>
+</section>
+
+<div class="action-bar">
+  <button id="run-btn">
+    <span class="julia-dots" id="run-btn-dots"><span></span><span></span><span></span></span>
+    Run
+  </button>
+</div>
+
+<div class="status-bar" id="run-status-bar">ready</div>
+
 <script>
 /* ============================================================
    CONFIG — fill these in before deploying
@@ -325,6 +372,7 @@ const CONFIG = {
   GITHUB_BRANCH: "main",
   GALLERY_PATH:  "gallery",
   BACKEND_URL:   "https://vps-8abb7fc4.vps.ovh.net/generate", // the Julia HTTP.jl / Genie.jl endpoint
+  RUN_URL:       "https://vps-8abb7fc4.vps.ovh.net/run",      // runs Julia code using the YAML input as parameters
 };
 
 const sourceInput   = document.getElementById('source-input');
@@ -336,10 +384,18 @@ const statusBar      = document.getElementById('status-bar');
 const sourceMeta     = document.getElementById('source-meta');
 const generatedMeta  = document.getElementById('generated-meta');
 
-function setStatus(text, kind){
-  statusBar.textContent = text;
-  statusBar.className = 'status-bar' + (kind ? ' ' + kind : '');
+const yamlInput      = document.getElementById('yaml-input');
+const runOutput      = document.getElementById('run-output');
+const runBtn         = document.getElementById('run-btn');
+const runStatusBar   = document.getElementById('run-status-bar');
+const runMeta        = document.getElementById('run-meta');
+
+function setBarStatus(bar, text, kind){
+  bar.textContent = text;
+  bar.className = 'status-bar' + (kind ? ' ' + kind : '');
 }
+function setStatus(text, kind){ setBarStatus(statusBar, text, kind); }
+function setRunStatus(text, kind){ setBarStatus(runStatusBar, text, kind); }
 
 /* ---------- Load gallery/ file list from the public repo ---------- */
 async function loadGallery(){
@@ -417,6 +473,39 @@ async function generate(){
   }
 }
 
+/* ---------- Run Julia code (backend uses YAML input as parameters) ---------- */
+async function run(){
+  const yaml = yamlInput.value;
+  if(!yaml.trim()){
+    setRunStatus('nothing to run — enter some YAML input first', 'error');
+    return;
+  }
+  runBtn.disabled = true;
+  setRunStatus('running Julia backend…');
+  runOutput.classList.add('placeholder');
+  runOutput.textContent = 'Running…';
+
+  try{
+    const res = await fetch(CONFIG.RUN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ yaml }),
+    });
+    if(!res.ok) throw new Error(`backend responded ${res.status}`);
+    const data = await res.json();
+    runOutput.classList.remove('placeholder');
+    runOutput.textContent = data.result;
+    runMeta.textContent = 'just now';
+    setRunStatus('ran successfully', 'ok');
+  }catch(err){
+    runOutput.classList.add('placeholder');
+    runOutput.textContent = `Request failed: ${err.message}\n\nCheck that RUN_URL in index.html points to a running instance of the Julia backend, and that CORS is enabled there.`;
+    setRunStatus(`error — ${err.message}`, 'error');
+  }finally{
+    runBtn.disabled = false;
+  }
+}
+
 /* ---------- Copy-to-clipboard icons ---------- */
 async function copyPaneContent(btn){
   const targetEl = document.getElementById(btn.dataset.target);
@@ -445,6 +534,7 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
 });
 
 generateBtn.addEventListener('click', generate);
+runBtn.addEventListener('click', run);
 loadGallery();
 </script>
 </body>
