@@ -24,6 +24,15 @@
     --font-code:     'JetBrains Mono', ui-monospace, monospace;
   }
 
+  :root[data-theme="light"]{
+    --bg:            #f6f6f9;
+    --panel:         #ffffff;
+    --panel-alt:     #eef0f5;
+    --border:        #dcdfe8;
+    --text:          #1b1c22;
+    --text-muted:    #6b7080;
+  }
+
   * { box-sizing: border-box; }
 
   body{
@@ -34,6 +43,7 @@
     min-height:100vh;
     display:flex;
     flex-direction:column;
+    transition:background .18s ease, color .18s ease;
   }
 
   a { color: var(--julia-blue); }
@@ -43,6 +53,41 @@
     padding:20px 24px 8px;
     border-bottom:1px solid var(--border);
   }
+  .header-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+  }
+  .header-icons{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-shrink:0;
+  }
+  .icon-btn{
+    width:32px;
+    height:32px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    border-radius:6px;
+    color:var(--text-muted);
+    cursor:pointer;
+    text-decoration:none;
+    transition:border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .icon-btn:hover{
+    border-color:var(--julia-purple);
+    color:var(--text);
+    background:rgba(149,88,178,.15);
+  }
+  .icon-btn svg{ width:16px; height:16px; }
+  #theme-toggle .icon-moon{ display:none; }
+  :root[data-theme="light"] #theme-toggle .icon-sun{ display:none; }
+  :root[data-theme="light"] #theme-toggle .icon-moon{ display:block; }
   .eyebrow{
     display:flex;
     align-items:center;
@@ -272,11 +317,24 @@
 <body>
 
 <header>
-  <div class="eyebrow">
-    <span class="julia-dots"><span></span><span></span><span></span></span>
-    julia file generator
+  <div class="header-top">
+    <div class="header-title">
+      <div class="eyebrow">
+        <span class="julia-dots"><span></span><span></span><span></span></span>
+        julia file generator
+      </div>
+      <h1>Run <code>generate_file</code> from a page</h1>
+    </div>
+    <div class="header-icons">
+      <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle light / dark theme" title="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
+      <a class="icon-btn" href="https://github.com/luciano-drozda/test-gui" target="_blank" rel="noopener noreferrer" aria-label="View source on GitHub" title="View on GitHub">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
+      </a>
+    </div>
   </div>
-  <h1>Run <code>generate_file</code> from a page</h1>
 </header>
 
 <div class="gallery-bar" id="gallery-bar">
@@ -364,6 +422,29 @@
 
 
 <script>
+/* ---------- Theme toggle (dark / light) ---------- */
+(function initTheme(){
+  const THEME_KEY = 'julia-gui-theme';
+
+  function getStoredTheme(){
+    try{ return localStorage.getItem(THEME_KEY); }
+    catch(err){ return null; } // storage unavailable (e.g. sandboxed preview)
+  }
+  function storeTheme(theme){
+    try{ localStorage.setItem(THEME_KEY, theme); }
+    catch(err){ /* ignore — theme just won't persist across reloads */ }
+  }
+
+  let theme = getStoredTheme() || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    storeTheme(theme);
+  });
+})();
+
 /* ============================================================
    CONFIG — fill these in before deploying
    ============================================================ */
