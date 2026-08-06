@@ -237,7 +237,7 @@
   }
   #generate-btn:hover, #validate-btn:hover{ background:#8249a3; }
   #generate-btn:active, #validate-btn:active{ transform:scale(.98); }
-  #generate-btn:disabled, #validate-btn:disabled{ background:#4a3f57; cursor:progress; }
+  #generate-btn:disabled, #validate-btn:disabled{ background:#4a3f57; cursor:not-allowed; }
 
   .pulse-dots{ display:inline-flex; gap:4px; }
   .pulse-dots span{
@@ -323,9 +323,8 @@
 
 <div class="status-bar" id="status-bar">ready</div>
 
-<div class="section-label">yaml/</div>
 <div class="action-bar">
-  <button id="validate-btn">
+  <button id="validate-btn" disabled title="Generate successfully first to enable Validate">
     <span class="julia-dots" id="validate-btn-dots"><span></span><span></span><span></span></span>
     Validate
   </button>
@@ -467,6 +466,8 @@ async function generate(){
     generatedOut.textContent = data.result;
     generatedMeta.textContent = 'just now';
     setStatus('generated successfully', 'ok');
+    validateBtn.disabled = false;
+    validateBtn.title = '';
 
     // Backend also returns a derived YAML prefill (e.g. extracted from the
     // generated code) — drop it into the yaml input box automatically.
