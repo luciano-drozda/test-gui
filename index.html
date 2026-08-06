@@ -328,6 +328,7 @@
   <section class="pane">
     <div class="pane-header">
       <span><span class="dot" style="background:var(--julia-blue);"></span>yaml input</span>
+      <span id="yaml-meta"></span>
     </div>
     <div class="pane-body">
       <textarea id="yaml-input" placeholder="Enter YAML-compliant parameters here…" spellcheck="false"></textarea>
@@ -385,6 +386,7 @@ const sourceMeta     = document.getElementById('source-meta');
 const generatedMeta  = document.getElementById('generated-meta');
 
 const yamlInput      = document.getElementById('yaml-input');
+const yamlMeta       = document.getElementById('yaml-meta');
 const runOutput      = document.getElementById('run-output');
 const runBtn         = document.getElementById('run-btn');
 const runStatusBar   = document.getElementById('run-status-bar');
@@ -464,6 +466,13 @@ async function generate(){
     generatedOut.textContent = data.result;
     generatedMeta.textContent = 'just now';
     setStatus('generated successfully', 'ok');
+
+    // Backend also returns a derived YAML prefill (e.g. extracted from the
+    // generated code) — drop it into the yaml input box automatically.
+    if(typeof data.yaml_prefill === 'string' && data.yaml_prefill.trim()){
+      yamlInput.value = data.yaml_prefill;
+      yamlMeta.textContent = 'auto-filled from generated output';
+    }
   }catch(err){
     generatedOut.classList.add('placeholder');
     generatedOut.textContent = `Request failed: ${err.message}\n\nCheck that BACKEND_URL in index.html points to a running instance of backend/generate_server.jl, and that CORS is enabled there.`;
@@ -535,6 +544,7 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
 
 generateBtn.addEventListener('click', generate);
 runBtn.addEventListener('click', run);
+yamlInput.addEventListener('input', () => { yamlMeta.textContent = ''; });
 loadGallery();
 </script>
 </body>
