@@ -92,7 +92,7 @@
     display:flex;
     align-items:center;
     gap:8px;
-    font-size:12px;
+    font-size:15px;
     letter-spacing:.12em;
     text-transform:uppercase;
     color:var(--text-muted);
@@ -107,13 +107,13 @@
   .julia-dots span:nth-child(3){ background:var(--julia-purple); }
   h1{
     margin:0;
-    font-size:22px;
+    font-size:27.5px;
     font-weight:600;
     letter-spacing:-.01em;
   }
   h1 code{
     font-family:var(--font-code);
-    font-size:19px;
+    font-size:23.75px;
     color:var(--julia-purple);
   }
 
@@ -128,7 +128,7 @@
     background:var(--panel-alt);
   }
   .gallery-label{
-    font-size:11px;
+    font-size:13.75px;
     color:var(--text-muted);
     letter-spacing:.08em;
     text-transform:uppercase;
@@ -137,7 +137,7 @@
   }
   .gallery-tab{
     font-family:var(--font-code);
-    font-size:13px;
+    font-size:16.25px;
     background:transparent;
     color:var(--text-muted);
     border:1px solid var(--border);
@@ -160,7 +160,7 @@
 
   .section-label{
     padding:14px 24px 0;
-    font-size:11px;
+    font-size:13.75px;
     letter-spacing:.08em;
     text-transform:uppercase;
     color:var(--text-muted);
@@ -190,7 +190,7 @@
     justify-content:space-between;
     padding:10px 16px;
     border-bottom:1px solid var(--border);
-    font-size:11px;
+    font-size:13.75px;
     letter-spacing:.08em;
     text-transform:uppercase;
     color:var(--text-muted);
@@ -199,6 +199,35 @@
     width:6px; height:6px; border-radius:50%;
     display:inline-block; margin-right:6px;
   }
+  .pane-header-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .report-issue-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:var(--font-ui);
+    font-size:13.75px;
+    letter-spacing:normal;
+    text-transform:none;
+    padding:4px 10px;
+    border:1px solid var(--border);
+    border-radius:6px;
+    background:var(--panel-alt);
+    color:var(--text-muted);
+    text-decoration:none;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .report-issue-btn:hover{
+    border-color:var(--julia-purple);
+    color:var(--text);
+    background:rgba(149,88,178,.15);
+  }
+  .report-issue-btn svg{ width:14px; height:14px; flex-shrink:0; }
 
   /* Fixed proportion of viewport height, scrollable in both directions */
   .pane-body{
@@ -213,7 +242,7 @@
     border:none;
     resize:none;
     font-family:var(--font-code);
-    font-size:13px;
+    font-size:16.25px;
     line-height:1.6;
     white-space:pre;
     overflow:auto;
@@ -315,7 +344,7 @@
   #generate-btn, #validate-btn{
     font-family:var(--font-ui);
     font-weight:600;
-    font-size:14px;
+    font-size:17.5px;
     color:#fff;
     background:var(--julia-purple);
     border:none;
@@ -351,7 +380,7 @@
   /* ---------- Status bar ---------- */
   .status-bar{
     font-family:var(--font-code);
-    font-size:12px;
+    font-size:15px;
     padding:8px 16px;
     color:#fff;
     background:var(--julia-blue);
@@ -386,7 +415,7 @@
 
 <div class="gallery-bar" id="gallery-bar">
   <span class="gallery-label">gallery/</span>
-  <span id="gallery-status" style="color:var(--text-muted); font-size:12px;">loading files…</span>
+  <span id="gallery-status" style="color:var(--text-muted); font-size:15px;">loading files…</span>
 </div>
 
 <main class="panes-grid">
@@ -459,7 +488,13 @@
   <section class="pane">
     <div class="pane-header">
       <span><span class="dot" style="background:var(--julia-green);"></span>validate output</span>
-      <span id="validate-meta"></span>
+      <div class="pane-header-actions">
+        <span id="validate-meta"></span>
+        <a id="report-issue-btn" class="report-issue-btn" href="https://github.com/luciano-drozda/test-gui/issues/new" target="_blank" rel="noopener noreferrer" title="Pre-fill a GitHub issue with the contents of all four boxes">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
+          Report Issue
+        </a>
+      </div>
     </div>
     <div class="pane-body">
       <pre id="validate-output" class="placeholder">Output will appear here after you click Validate.</pre>
@@ -578,7 +613,7 @@ async function loadGallery(){
     if(files.length === 0){
       const span = document.createElement('span');
       span.style.color = 'var(--text-muted)';
-      span.style.fontSize = '12px';
+      span.style.fontSize = '15px';
       span.textContent = 'no .jl files found';
       galleryBar.appendChild(span);
       return;
@@ -713,6 +748,35 @@ async function copyPaneContent(btn){
 
 document.querySelectorAll('.copy-btn').forEach(btn => {
   btn.addEventListener('click', () => copyPaneContent(btn));
+});
+
+/* ---------- Report Issue: pre-fill a GitHub issue with all box contents ---------- */
+const reportIssueBtn = document.getElementById('report-issue-btn');
+const REPORT_ISSUE_BASE_URL = 'https://github.com/luciano-drozda/test-gui/issues/new';
+
+function boxContentOrEmpty(el){
+  if(el.classList.contains('placeholder')) return '(empty)';
+  const value = el.tagName === 'TEXTAREA' ? el.value : el.textContent;
+  return value && value.trim() ? value : '(empty)';
+}
+
+function buildIssueBody(){
+  const sections = [
+    ['Source',           boxContentOrEmpty(sourceInput)],
+    ['Generated',        boxContentOrEmpty(generatedOut)],
+    ['YAML input',       boxContentOrEmpty(yamlInput)],
+    ['Validate output',  boxContentOrEmpty(validateOutput)],
+  ];
+  return sections
+    .map(([label, content]) => `### ${label}\n\`\`\`\n${content}\n\`\`\``)
+    .join('\n\n');
+}
+
+reportIssueBtn.addEventListener('click', () => {
+  const title = 'Validation issue';
+  const body = buildIssueBody();
+  const params = new URLSearchParams({ title, body });
+  reportIssueBtn.href = `${REPORT_ISSUE_BASE_URL}?${params.toString()}`;
 });
 
 generateBtn.addEventListener('click', generate);
